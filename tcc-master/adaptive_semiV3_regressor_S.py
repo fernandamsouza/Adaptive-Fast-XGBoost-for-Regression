@@ -3,16 +3,14 @@ import numpy as np
 import xgboost as xgb
 import random
 
-from skmultiflow.core.base import BaseSKMObject, ClassifierMixin
+from skmultiflow.core.base import BaseSKMObject, ClassifierMixin, RegressorMixin
 from skmultiflow.utils import get_dimensions
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import KNeighborsRegressor
+from timeit import default_timer as timer
 import os
-from skmultiflow.drift_detection import ADWIN
-from skmultiflow.drift_detection import KSWIN
-from skmultiflow.drift_detection import DDM
 
 
-class AdaptiveSemi(BaseSKMObject, ClassifierMixin):
+class AdaptiveSemiRegressorJS(BaseSKMObject, RegressorMixin):
 
     def __init__(self,
                  learning_rate=0.3,
@@ -22,9 +20,7 @@ class AdaptiveSemi(BaseSKMObject, ClassifierMixin):
                  ratio_unsampled=0,
                  small_window_size=0,
                  max_buffer=5,
-                 pre_train=2,
-                 detect_drift = True,
-                 unic="S"):
+                 pre_train=2):
         super().__init__()
         self.learning_rate = learning_rate
         self.max_depth = max_depth
@@ -39,13 +35,13 @@ class AdaptiveSemi(BaseSKMObject, ClassifierMixin):
 
         self._max_buffer = max_buffer
         self._pre_train = pre_train
+
+        self._inside_pre_train = self._max_buffer - self._pre_train
+
         self._ratio_unsampled = ratio_unsampled
         self._X_small_buffer = np.array([])
         self._y_small_buffer = np.array([])
         self._samples_seen = 0
-        self.detect_drift = detect_drift
-        self.unic = unic
-        self._drift_detector = []
         self._model_idx = 0
         self._small_window_size = small_window_size
         self._count_buffer = 0
@@ -58,19 +54,10 @@ class AdaptiveSemi(BaseSKMObject, ClassifierMixin):
         self._reset_window_size()
         self._init_margin = 0.0
         self._boosting_params = {
-            "objective": "binary:logistic",
+            "objective": "reg:squarederror",
             "eta": self.learning_rate,
-            "eval_metric": "logloss",
+            "eval_metric": "rmse",
             "max_depth": self.max_depth}
-
-        # Array de tecnicas (KSWIN, ADWIN, DDM)
-        if self.detect_drift:
-            if self.unic == "S":
-                self._drift_detector.append(ADWIN())
-            else:
-                self._drift_detector.append(ADWIN())
-                self._drift_detector.append(KSWIN())
-                self._drift_detector.append(DDM())
 
     def reset(self):
         self._first_run = True
@@ -152,7 +139,7 @@ class AdaptiveSemi(BaseSKMObject, ClassifierMixin):
         npUnlabeled = np.array(unlabeled)
         if npArrX.shape[0] > 6:
             if npUnlabeled.shape[0] > 0:
-                nbrs = KNeighborsClassifier(n_neighbors=3, algorithm='ball_tree').fit(self._X_small_buffer, self._y_small_buffer)
+                nbrs = KNeighborsRegressor(n_neighbors=3, algorithm='ball_tree').fit(self._X_small_buffer, self._y_small_buffer)
 
                 proba = nbrs.predict_proba(npUnlabeled)
 
@@ -195,53 +182,6 @@ class AdaptiveSemi(BaseSKMObject, ClassifierMixin):
 
             # Check window size and adjust it if necessary
             self._adjust_window_size()
-        
-         # Support for concept drift
-        if self.detect_drift:
-            correctly_classifies = self.predict(X) == y
-            # print(int (correctly_classifies))
-            if self._drift_detector[0]:
-                # Check for warning
-                self._drift_detector[0].add_element(int(not correctly_classifies))
-                # Check if there was a change
-                if self._drift_detector[0].detected_change():
-                    
-                    # Reset window size
-                    self._reset_window_size()
-                    
-                    # self._count_buffer = 0
-
-                    # booster = self._temp_booster
-                    # # Update ensemble
-                    # self._booster = booster
-
-            if self._drift_detector[1]:
-                # Check for warning
-                self._drift_detector[1].add_element(int(not correctly_classifies))
-                # Check if there was a change
-                if self._drift_detector[1].detected_change():
-                    # Reset window size
-                    self._reset_window_size()
-
-                    # self._count_buffer = 0
-                    
-                    # booster = self._temp_booster
-                    # # Update ensemble
-                    # self._booster = booster
-
-            if self._drift_detector[2]:
-                # Check for warning
-                self._drift_detector[2].add_element(int(not correctly_classifies))
-                # Check if there was a change
-                if self._drift_detector[2].detected_change():
-                    # Reset window size
-                    self._reset_window_size()
-
-                    # self._count_buffer = 0
-                    
-                    # booster = self._temp_booster
-                    # # Update ensemble
-                    # self._booster = booster
 
     def _adjust_window_size(self):
         if self._dynamic_window_size < self.max_window_size:
@@ -259,9 +199,8 @@ class AdaptiveSemi(BaseSKMObject, ClassifierMixin):
         self.window_size = self._dynamic_window_size
 
     def _train_on_mini_batch(self, X, y):
-        booster = self._train_booster(X, y, self._main_model, self._booster)
-        inside_pre_train = self._max_buffer - self._count_buffer
-        if inside_pre_train >= self._pre_train:
+        
+        if self._count_buffer >= self._inside_pre_train:
             temp_booster = self._train_booster(X, y, self._temp_model, self._temp_booster)
             self._temp_booster = temp_booster
 
@@ -270,24 +209,33 @@ class AdaptiveSemi(BaseSKMObject, ClassifierMixin):
             self._temp_booster = None
             self._count_buffer = 0
             self._temp_model,self._main_model = self._main_model,self._temp_model
+        else:
+            booster = self._train_booster(X, y, self._main_model, self._booster)
         
-        # Update classificador
+        # Update ensemble
         self._booster = booster
 
     def _train_booster(self, X: np.ndarray, y: np.ndarray, fileName, currentBooster):
-        d_mini_batch_train = xgb.DMatrix(X, y.astype(int))
+        d_mini_batch_train = xgb.DMatrix(X, y)
         
+        # teste = self._boosting_params.copy()
+        # teste["num_boost_round"] = 1
+
         if currentBooster:
             booster = xgb.train(params=self._boosting_params,
                                 dtrain=d_mini_batch_train,
                                 num_boost_round=1,
                                 xgb_model=fileName)
+            # booster = xgb.XGBRegressor(**self._boosting_params)
+            # booster.fit(X, y, xgb_model=fileName, eval_metric="rmse")
             booster.save_model(fileName)
         else:
             booster = xgb.train(params=self._boosting_params,
                                 dtrain=d_mini_batch_train,
                                 num_boost_round=1,
                                 verbose_eval=False)
+            # booster = xgb.XGBRegressor(**self._boosting_params)
+            # booster.fit(X, y, verbose=False, eval_metric="rmse")
             booster.save_model(fileName)
         return booster
 
@@ -308,12 +256,16 @@ class AdaptiveSemi(BaseSKMObject, ClassifierMixin):
             predicted class labels for all instances in X.
 
         """
-        # start_time = time.time()
+        #start_time = timer()
         if self._booster:
             d_test = xgb.DMatrix(X)
+            #print("Matrix time")
+            #print(timer()-start_time)
+            #start_time = timer()
             predicted = self._booster.predict(d_test)
-            print(predicted)
-            return np.array(predicted > 0.5).astype(int)
+            #print("Predict time")
+            #print(timer()-start_time)
+            return predicted
         # Ensemble is empty, return default values (0)
         return np.zeros(get_dimensions(X)[0])
 

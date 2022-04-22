@@ -33,7 +33,6 @@ stream = ConceptDriftStream(random_state=1000, position=1000)
 # stream = FileStream("data/Keystroke.csv")
 # stream.prepare_for_use()   # Required for skmultiflow v0.4.1
  
-print(stream.next_sample(10))
 evaluator = EvaluatePrequential(pretrain_size=0,
                                 max_samples=20000,
                                 show_plot=True,

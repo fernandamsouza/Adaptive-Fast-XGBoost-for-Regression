@@ -6,10 +6,6 @@ import random
 from skmultiflow.core.base import BaseSKMObject, ClassifierMixin
 from skmultiflow.utils import get_dimensions
 from sklearn.neighbors import KNeighborsClassifier
-import os
-from skmultiflow.drift_detection import ADWIN
-from skmultiflow.drift_detection import KSWIN
-from skmultiflow.drift_detection import DDM
 
 
 class AdaptiveSemi(BaseSKMObject, ClassifierMixin):
@@ -20,11 +16,7 @@ class AdaptiveSemi(BaseSKMObject, ClassifierMixin):
                  max_window_size=1000,
                  min_window_size=None,
                  ratio_unsampled=0,
-                 small_window_size=0,
-                 max_buffer=5,
-                 pre_train=2,
-                 detect_drift = True,
-                 unic="S"):
+                 small_window_size=0):
         super().__init__()
         self.learning_rate = learning_rate
         self.max_depth = max_depth
@@ -32,25 +24,16 @@ class AdaptiveSemi(BaseSKMObject, ClassifierMixin):
         self.min_window_size = min_window_size
         self._first_run = True
         self._booster = None
-        self._temp_booster = None
         self._drift_detector = None
         self._X_buffer = np.array([])
         self._y_buffer = np.array([])
 
-        self._max_buffer = max_buffer
-        self._pre_train = pre_train
         self._ratio_unsampled = ratio_unsampled
         self._X_small_buffer = np.array([])
         self._y_small_buffer = np.array([])
         self._samples_seen = 0
-        self.detect_drift = detect_drift
-        self.unic = unic
-        self._drift_detector = []
         self._model_idx = 0
         self._small_window_size = small_window_size
-        self._count_buffer = 0
-        self._main_model = "model"
-        self._temp_model = "temp"
 
         self._configure()
 
@@ -60,17 +43,13 @@ class AdaptiveSemi(BaseSKMObject, ClassifierMixin):
         self._boosting_params = {
             "objective": "binary:logistic",
             "eta": self.learning_rate,
+            'update':'refresh',
+            'process_type': 'default',
+            'refresh_leaf': True,
+            "n_estimators": 100,
+            "num_parallel_tree": 1,
             "eval_metric": "logloss",
             "max_depth": self.max_depth}
-
-        # Array de tecnicas (KSWIN, ADWIN, DDM)
-        if self.detect_drift:
-            if self.unic == "S":
-                self._drift_detector.append(ADWIN())
-            else:
-                self._drift_detector.append(ADWIN())
-                self._drift_detector.append(KSWIN())
-                self._drift_detector.append(DDM())
 
     def reset(self):
         self._first_run = True
@@ -150,9 +129,10 @@ class AdaptiveSemi(BaseSKMObject, ClassifierMixin):
         if npArrX.shape[0] > 0:
             self._change_small_window(npArrX, npArrY)
         npUnlabeled = np.array(unlabeled)
+
         if npArrX.shape[0] > 6:
             if npUnlabeled.shape[0] > 0:
-                nbrs = KNeighborsClassifier(n_neighbors=3, algorithm='ball_tree').fit(self._X_small_buffer, self._y_small_buffer)
+                nbrs = KNeighborsClassifier(n_neighbors=4, algorithm='ball_tree').fit(self._X_small_buffer, self._y_small_buffer)
 
                 proba = nbrs.predict_proba(npUnlabeled)
 
@@ -162,13 +142,20 @@ class AdaptiveSemi(BaseSKMObject, ClassifierMixin):
                     margim = proba[j][biggerIndex] - proba[j][otherIndex]
 
                     if (margim > 0.5):
+                        # print("proba")
+                        # print(proba[j])
+                        # print("incerteza")
+                        # print(margim)
+                        # print("y q eu acho")
+                        # print(biggerIndex)
+                        # print("y certo")
+                        # print(npArrY[j])
                         npArrXNew = np.array([npUnlabeled[j]])
                         npArrYNew = np.array([biggerIndex])
                         npArrX = np.concatenate((npArrX, npArrXNew))
                         npArrY = np.concatenate((npArrY, npArrYNew))
         # print("semi")
         # print(len(npArrX))
-        # print(len(self._X_small_buffer))
         return (npArrX, npArrY)
 
 
@@ -183,65 +170,17 @@ class AdaptiveSemi(BaseSKMObject, ClassifierMixin):
         self._y_buffer = np.concatenate((self._y_buffer, y))
 
         while self._X_buffer.shape[0] >= self.window_size:
-            self._count_buffer = self._count_buffer + 1
+            
             npArrX, npArrY = self._unlabeled_fit()
             if npArrX.shape[0] > 0:
                 self._train_on_mini_batch(X=npArrX,
                                         y=npArrY)
-                                    
             delete_idx = [i for i in range(self.window_size)]
             self._X_buffer = np.delete(self._X_buffer, delete_idx, axis=0)
             self._y_buffer = np.delete(self._y_buffer, delete_idx, axis=0)
 
             # Check window size and adjust it if necessary
             self._adjust_window_size()
-        
-         # Support for concept drift
-        if self.detect_drift:
-            correctly_classifies = self.predict(X) == y
-            # print(int (correctly_classifies))
-            if self._drift_detector[0]:
-                # Check for warning
-                self._drift_detector[0].add_element(int(not correctly_classifies))
-                # Check if there was a change
-                if self._drift_detector[0].detected_change():
-                    
-                    # Reset window size
-                    self._reset_window_size()
-                    
-                    # self._count_buffer = 0
-
-                    # booster = self._temp_booster
-                    # # Update ensemble
-                    # self._booster = booster
-
-            if self._drift_detector[1]:
-                # Check for warning
-                self._drift_detector[1].add_element(int(not correctly_classifies))
-                # Check if there was a change
-                if self._drift_detector[1].detected_change():
-                    # Reset window size
-                    self._reset_window_size()
-
-                    # self._count_buffer = 0
-                    
-                    # booster = self._temp_booster
-                    # # Update ensemble
-                    # self._booster = booster
-
-            if self._drift_detector[2]:
-                # Check for warning
-                self._drift_detector[2].add_element(int(not correctly_classifies))
-                # Check if there was a change
-                if self._drift_detector[2].detected_change():
-                    # Reset window size
-                    self._reset_window_size()
-
-                    # self._count_buffer = 0
-                    
-                    # booster = self._temp_booster
-                    # # Update ensemble
-                    # self._booster = booster
 
     def _adjust_window_size(self):
         if self._dynamic_window_size < self.max_window_size:
@@ -259,36 +198,25 @@ class AdaptiveSemi(BaseSKMObject, ClassifierMixin):
         self.window_size = self._dynamic_window_size
 
     def _train_on_mini_batch(self, X, y):
-        booster = self._train_booster(X, y, self._main_model, self._booster)
-        inside_pre_train = self._max_buffer - self._count_buffer
-        if inside_pre_train >= self._pre_train:
-            temp_booster = self._train_booster(X, y, self._temp_model, self._temp_booster)
-            self._temp_booster = temp_booster
-
-        if self._count_buffer >= self._max_buffer:
-            booster = self._temp_booster
-            self._temp_booster = None
-            self._count_buffer = 0
-            self._temp_model,self._main_model = self._main_model,self._temp_model
-        
-        # Update classificador
+        booster = self._train_booster(X, y, self._model_idx)
+        # Update ensemble
         self._booster = booster
 
-    def _train_booster(self, X: np.ndarray, y: np.ndarray, fileName, currentBooster):
+    def _train_booster(self, X: np.ndarray, y: np.ndarray, last_model_idx: int):
         d_mini_batch_train = xgb.DMatrix(X, y.astype(int))
-        
-        if currentBooster:
+
+        if self._booster:
             booster = xgb.train(params=self._boosting_params,
                                 dtrain=d_mini_batch_train,
                                 num_boost_round=1,
-                                xgb_model=fileName)
-            booster.save_model(fileName)
+                                xgb_model='model_1.model')
+            # booster.save_model('model_1.model')
         else:
             booster = xgb.train(params=self._boosting_params,
                                 dtrain=d_mini_batch_train,
                                 num_boost_round=1,
                                 verbose_eval=False)
-            booster.save_model(fileName)
+            # booster.save_model('model_1.model')
         return booster
 
     def predict(self, X):
@@ -312,7 +240,6 @@ class AdaptiveSemi(BaseSKMObject, ClassifierMixin):
         if self._booster:
             d_test = xgb.DMatrix(X)
             predicted = self._booster.predict(d_test)
-            print(predicted)
             return np.array(predicted > 0.5).astype(int)
         # Ensemble is empty, return default values (0)
         return np.zeros(get_dimensions(X)[0])
