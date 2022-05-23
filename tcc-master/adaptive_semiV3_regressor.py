@@ -12,6 +12,7 @@ from skmultiflow.drift_detection import ADWIN
 from skmultiflow.drift_detection import KSWIN
 from skmultiflow.drift_detection import DDM
 from skmultiflow.drift_detection import PageHinkley
+from skmultiflow.drift_detection import EDDM
 
 from skmultiflow.trees import HoeffdingTreeRegressor
 
@@ -77,9 +78,9 @@ class AdaptiveSemiRegressorJ(BaseSKMObject, RegressorMixin):
             if self.unic == "S":
                 self._drift_detector.append(ADWIN())
             else:
-                self._drift_detector.append(ADWIN())
-                self._drift_detector.append(KSWIN(window_size=500))
-                self._drift_detector.append(DDM())
+                self._drift_detector.append(ADWIN(delta=0.00001))
+                self._drift_detector.append(KSWIN(alpha=0.00001))
+
 
     def reset(self):
         self._first_run = True
@@ -212,6 +213,8 @@ class AdaptiveSemiRegressorJ(BaseSKMObject, RegressorMixin):
                 detector.add_element(float(error))
                 if (detector.detected_change()):
                     self._reset_window_size()
+                    # with open("out", "a") as myfile:
+                    #     myfile.write("\n[DRIFT_DETECTADO] - " + str(detector) + '[D]' + str(self._dynamic_window_size))
                     break
         
         # # Support for concept drift
@@ -278,7 +281,7 @@ class AdaptiveSemiRegressorJ(BaseSKMObject, RegressorMixin):
     def _train_on_mini_batch(self, X, y):
         
         if self._count_buffer >= self._inside_pre_train:
-            temp_booster = self._train_booster(X, y, self._temp_model, self._temp_booster)
+            temp_booster = self._train_booster(X, y, self._temp_booster)
             self._temp_booster = temp_booster
 
         if self._count_buffer >= self._max_buffer:
@@ -287,12 +290,12 @@ class AdaptiveSemiRegressorJ(BaseSKMObject, RegressorMixin):
             self._count_buffer = 0
             self._temp_model,self._main_model = self._main_model,self._temp_model
         else:
-            booster = self._train_booster(X, y, self._main_model, self._booster)
+            booster = self._train_booster(X, y, self._booster)
         
         # Update ensemble
         self._booster = booster
 
-    def _train_booster(self, X: np.ndarray, y: np.ndarray, fileName, currentBooster):
+    def _train_booster(self, X: np.ndarray, y: np.ndarray, currentBooster):
         d_mini_batch_train = xgb.DMatrix(X, y)
         
         # teste = self._boosting_params.copy()
@@ -302,10 +305,10 @@ class AdaptiveSemiRegressorJ(BaseSKMObject, RegressorMixin):
             booster = xgb.train(params=self._boosting_params,
                                 dtrain=d_mini_batch_train,
                                 num_boost_round=1,
-                                xgb_model=fileName)
+                                xgb_model=currentBooster)
             # booster = xgb.XGBRegressor(**self._boosting_params)
             # booster.fit(X, y, xgb_model=fileName, eval_metric="rmse")
-            booster.save_model(fileName)
+            # booster.save_model(fileName)
         else:
             booster = xgb.train(params=self._boosting_params,
                                 dtrain=d_mini_batch_train,
@@ -313,7 +316,7 @@ class AdaptiveSemiRegressorJ(BaseSKMObject, RegressorMixin):
                                 verbose_eval=False)
             # booster = xgb.XGBRegressor(**self._boosting_params)
             # booster.fit(X, y, verbose=False, eval_metric="rmse")
-            booster.save_model(fileName)
+            # booster.save_model(fileName)
         return booster
 
     def predict(self, X):

@@ -1,3 +1,5 @@
+from turtle import ht
+from scipy import rand
 from skmultiflow.data.agrawal_generator import AGRAWALGenerator
 from adaptive_xgboost import AdaptiveXGBoostClassifier
 # from adaptive_incremental_ensemble import AdaptiveXGBoostClassifier2
@@ -19,6 +21,10 @@ from skmultiflow.data.random_tree_generator import RandomTreeGenerator
 from skmultiflow.data import SEAGenerator
 from skmultiflow.meta import AdaptiveRandomForestClassifier
 from skmultiflow.trees import HoeffdingTreeRegressor
+from skmultiflow.trees import HoeffdingAdaptiveTreeRegressor
+from skmultiflow.trees import iSOUPTreeRegressor
+from skmultiflow.trees import StackedSingleTargetHoeffdingTreeRegressor
+from skmultiflow.lazy import KNNRegressor
 
 from skmultiflow.meta import AdaptiveRandomForestRegressor
 from skmultiflow.data import SEAGenerator, RegressionGenerator, LEDGenerator, RandomRBFGenerator, HyperplaneGenerator, WaveformGenerator, RandomTreeGenerator, MIXEDGenerator
@@ -47,8 +53,6 @@ ratio_unsampled = 0
 small_window_size = 150
 max_samples = 500000
 width = max_samples * 0.02
-
-max_buffer = 25
 pre_train = 15
 
 
@@ -185,10 +189,11 @@ spat_network_3d = FileStream("datasets/3D_spatial_network.csv")
 metrotraffic = FileStream("datasets/Metro_Interstate_Traffic_Volume_clean.csv")
 
 # stream = pol
-# stream = ConceptDriftStream(random_state=112, position=10000, width=1)
+stream = ConceptDriftStream(random_state=112, position=10000, width=1)
 # stream = ConceptDriftStream(random_state=1000, position=5000)
 # stream = ConceptDriftStream(random_state=112)
 # stream = AGRAWALGenerator()
+# stream = HyperplaneGenerator()
 
 reg1 = ConceptDriftStream(stream=RegressionGenerator(n_samples=500000, n_features=10, random_state=1),drift_stream=RegressionGenerator(n_samples=500000, n_features=10, random_state=2), position = max_samples/4, width = 1)
 reg2 = ConceptDriftStream(stream=reg1, drift_stream=RegressionGenerator(n_samples=500000, n_features=10, random_state=3), position = max_samples/2, width = 1)
@@ -200,9 +205,13 @@ regression_generator_drift_g4 = ConceptDriftStream(stream=regg2, drift_stream=Re
 
 stream = regression_generator_drift_a4
 
-HTR = HoeffdingTreeRegressor(random_state=1)
+HTR = HoeffdingTreeRegressor()
+HTRA = HoeffdingAdaptiveTreeRegressor()
+ISOUP = iSOUPTreeRegressor()
+SSHT = StackedSingleTargetHoeffdingTreeRegressor()
+KNN = KNNRegressor()
 
-ARFReg = AdaptiveRandomForestRegressor(random_state=1)
+ARFReg = AdaptiveRandomForestRegressor()
 
 evaluator = EvaluatePrequential(pretrain_size=0,
                                 max_samples=500000,
@@ -211,10 +220,16 @@ evaluator = EvaluatePrequential(pretrain_size=0,
                                 show_plot=True,
                                 metrics=["mean_square_error", "running_time"])
 
+# evaluator.evaluate(stream=stream,
+#                    model=[AXGBRegRD, AXGBRegR, AXGBRegSD, AXGBRegS, HTR],
+#                    model_names=["D+RESET", "RESET", "D", "D_SEM_RESET", "HTR"])
 evaluator.evaluate(stream=stream,
-                   model=[AXGBRegRD, AXGBRegR, AXGBRegSD, AXGBRegS, HTR],
-                   model_names=["D+RESET", "RESET", "D", "semRESET", "HTR"])
+model=[AXGBRegS],
+model_names=["D_SEM_RESET"])
 
+# evaluator.evaluate(stream=stream,
+#                    model=[AXGBRegSD],
+#                    model_names=["D"])
 print(AXGBRegRD._contadorADWIN)
 
 # evaluator.evaluate(stream=stream,
