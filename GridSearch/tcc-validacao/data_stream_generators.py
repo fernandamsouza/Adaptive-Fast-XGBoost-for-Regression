@@ -53,6 +53,10 @@ def generate_agr_with_drift(size: int, width: int = 1, random_state: int = 1):
         random_state=random_state,
     )
 
+def generateAgrawal():
+    print('oi')
+    return ConceptDriftStream(random_state=112, position=10000, width=1)
+
 
 def get_dataset(dataset, size):
     if dataset == "agr_a":
@@ -63,4 +67,6 @@ def get_dataset(dataset, size):
         return generate_sea_with_drift(size=size)
     if dataset == "sea_g":
         return generate_sea_with_drift(size=size, width=int(size * 0.02))
+    if dataset == "agrawal":
+        return generateAgrawal()
     return FileStream(f"datasets/{dataset}.csv")

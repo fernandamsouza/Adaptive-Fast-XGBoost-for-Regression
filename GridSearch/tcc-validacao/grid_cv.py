@@ -12,9 +12,27 @@ from modelos_adaptados_para_sklearn import (
     AdaptiveSemiRegressorJ2
 )
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.metrics import make_scorer, mean_squared_error
+from sklearn.metrics import make_scorer, mean_squared_error, r2_score
 #define your own mse and set greater_is_better=False
 mse = make_scorer(mean_squared_error,greater_is_better=False)
+
+def MSE(y_true,y_pred):
+    mse = mean_squared_error(y_true, y_pred)
+    print ('MSE: %2.3f' % mse)
+    return mse
+
+def R2(y_true,y_pred):    
+     r2 = r2_score(y_true, y_pred)
+     print ('R2: %2.3f' % r2)
+     return r2
+
+def two_score(y_true,y_pred):    
+    MSE(y_true,y_pred) #set score here and not below if using MSE in GridCV
+    score = R2(y_true,y_pred)
+    return score
+
+def two_scorer():
+    return make_scorer(two_score, greater_is_better=False) # change for false if using MSE
 
 
 def _criar_modelo(**kwargs):
@@ -35,13 +53,8 @@ parameter_grid = {
 }
 
 parameter_grid_drifts = {
-    "adwin_delta": [0.002, 0.001],
-    "kswin_alpha": [0.002, 0.003],
-    "kswin_window_size": [100, 500],
-    "kswin_stat_size": [30, 100],
-    "ddm_min_num_instances": [30, 50],
-    "ddm_warning_level": [1, 2],
-    "ddm_out_control_level": [3, 5]
+    "adwin_delta": [1, 0.00001, 0.0001],
+    "kswin_alpha": [1, 0.00001, 0.0001],
 }
 
 print(f"Carregando dataset {argumentos.DATASET}")
@@ -58,7 +71,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 print(X_train, X_test,y_train, y_test)
-gs_cv = GridSearchCV(_criar_modelo(), parameter_grid_drifts, scoring=mse)
+gs_cv = GridSearchCV(_criar_modelo(), parameter_grid_drifts, scoring=two_scorer(), n_jobs=2)
 
 print(f"Realizando GridSearchCV")
 result = gs_cv.fit(X_train, y_train)
