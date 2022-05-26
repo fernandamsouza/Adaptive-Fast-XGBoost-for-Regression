@@ -176,20 +176,22 @@ AXGBRegS = AdaptiveSemiRegressorJS(learning_rate=learning_rate,
 # stream = SEAGenerator(noise_percentage=0.1)
 # stream = HyperplaneGenerator()
 # stream = RegressionGenerator(n_samples=50000)
-abalone = FileStream("datasets/abalone.csv")
-ailerons = FileStream("datasets/ailerons.csv")
-bike = FileStream("datasets/bikes_clean.csv")
-fried_delve = FileStream("datasets/fried_delve.csv")
-elevators = FileStream("datasets/elevators.csv")
-house8l = FileStream("datasets/house8L.csv")
-house16h = FileStream("datasets/house16H.csv")
-cal_housing = FileStream("datasets/cal_housing.csv")
-pol = FileStream("datasets/pol.csv")
-spat_network_3d = FileStream("datasets/3D_spatial_network.csv")
-metrotraffic = FileStream("datasets/Metro_Interstate_Traffic_Volume_clean.csv")
+
+
+# abalone = FileStream("datasets/abalone.csv")
+# ailerons = FileStream("datasets/ailerons.csv")
+# bike = FileStream("datasets/bikes_clean.csv")
+# fried_delve = FileStream("datasets/fried_delve.csv")
+# elevators = FileStream("datasets/elevators.csv")
+# house8l = FileStream("datasets/house8L.csv")
+# house16h = FileStream("datasets/house16H.csv")
+# cal_housing = FileStream("datasets/cal_housing.csv")
+# pol = FileStream("datasets/pol.csv")
+# spat_network_3d = FileStream("datasets/3D_spatial_network.csv")
+# metrotraffic = FileStream("datasets/Metro_Interstate_Traffic_Volume_clean.csv")
 
 # stream = pol
-stream = ConceptDriftStream(random_state=112, position=10000, width=1)
+# stream = ConceptDriftStream(random_state=112, position=10000, width=1)
 # stream = ConceptDriftStream(random_state=1000, position=5000)
 # stream = ConceptDriftStream(random_state=112)
 # stream = AGRAWALGenerator()
@@ -199,19 +201,19 @@ reg1 = ConceptDriftStream(stream=RegressionGenerator(n_samples=500000, n_feature
 reg2 = ConceptDriftStream(stream=reg1, drift_stream=RegressionGenerator(n_samples=500000, n_features=10, random_state=3), position = max_samples/2, width = 1)
 regression_generator_drift_a4 = ConceptDriftStream(stream=reg2, drift_stream=RegressionGenerator(n_samples=500000, n_features=10, random_state=4), position = max_samples*3/4, width = 1)
 
-regg1 = ConceptDriftStream(stream=RegressionGenerator(n_samples=500000, n_features=10, random_state=1),drift_stream=RegressionGenerator(n_samples=500000, n_features=10, random_state=2), position = max_samples/4, width = width)
-regg2 = ConceptDriftStream(stream=regg1, drift_stream=RegressionGenerator(n_samples=500000, n_features=10, random_state=3), position = max_samples/2, width = width)
-regression_generator_drift_g4 = ConceptDriftStream(stream=regg2, drift_stream=RegressionGenerator(n_samples=500000, n_features=10, random_state=4), position = max_samples*3/4, width = width)
+# regg1 = ConceptDriftStream(stream=RegressionGenerator(n_samples=500000, n_features=10, random_state=1),drift_stream=RegressionGenerator(n_samples=500000, n_features=10, random_state=2), position = max_samples/4, width = width)
+# regg2 = ConceptDriftStream(stream=regg1, drift_stream=RegressionGenerator(n_samples=500000, n_features=10, random_state=3), position = max_samples/2, width = width)
+# regression_generator_drift_g4 = ConceptDriftStream(stream=regg2, drift_stream=RegressionGenerator(n_samples=500000, n_features=10, random_state=4), position = max_samples*3/4, width = width)
 
 stream = regression_generator_drift_a4
 
 HTR = HoeffdingTreeRegressor()
-HTRA = HoeffdingAdaptiveTreeRegressor()
-ISOUP = iSOUPTreeRegressor()
-SSHT = StackedSingleTargetHoeffdingTreeRegressor()
-KNN = KNNRegressor()
+# HTRA = HoeffdingAdaptiveTreeRegressor()
+# ISOUP = iSOUPTreeRegressor()
+# SSHT = StackedSingleTargetHoeffdingTreeRegressor()
+# KNN = KNNRegressor()
 
-ARFReg = AdaptiveRandomForestRegressor()
+# ARFReg = AdaptiveRandomForestRegressor()
 
 evaluator = EvaluatePrequential(pretrain_size=0,
                                 max_samples=500000,
@@ -230,7 +232,6 @@ model_names=["D_SEM_RESET"])
 # evaluator.evaluate(stream=stream,
 #                    model=[AXGBRegSD],
 #                    model_names=["D"])
-print(AXGBRegRD._contadorADWIN)
 
 # evaluator.evaluate(stream=stream,
 #                    model=[AXGBg3],
