@@ -253,7 +253,7 @@ evaluator = EvaluatePrequential(pretrain_size=0,
                                 max_samples=argumentos.MAX_REGISTROS,
                                 # batch_size=200,
                                 output_file="resultados_script_final/exec_" + str(argumentos.CLASSIFICADOR) + "_" + str(argumentos.DATASET) + str(argumentos.ITERACAO) + ".out",
-                                show_plot=True,
+                                show_plot=False,
                                 metrics=["mean_square_error", "running_time"])
 
 evaluator.evaluate(
