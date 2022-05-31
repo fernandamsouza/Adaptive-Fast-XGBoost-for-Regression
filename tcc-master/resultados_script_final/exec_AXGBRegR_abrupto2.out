@@ -1,0 +1,33 @@
+# TEST CONFIGURATION BEGIN
+# ConceptDriftStream(alpha=0.0, drift_stream=RegressionGenerator(n_features=10, n_informative=10, n_samples=500000, n_targets=1, random_state=4), position=450000, random_state=None, stream=ConceptDriftStream(alpha=0.0, drift_stream=RegressionGenerator(n_features=10, n_informative=10, n_samples=500000, n_targets=1, random_state=3), position=400000, random_state=None... stream=ConceptDriftStream(alpha=0.0, drift_stream=RegressionGenerator(n_features=10, n_informative=10, n_samples=500000, n_targets=1, random_state=2), position=50000, random_state=None, stream=RegressionGenerator(n_features=10, n_informative=10, n_samples=500000, n_targets=1, random_state=1), width=1), width=1), width=1), width=1), width=1), width=1), width=1), width=1), width=1)
+# [AXGBRegR] AdaptiveSemiRegressorJULIA(learning_rate=0.3, max_buffer=None, max_depth=6, max_window_size=1000, min_window_size=1, pre_train=None, ratio_unsampled=None, small_window_size=None)
+# EvaluatePrequential(batch_size=1, data_points_for_classification=False, max_samples=500000, max_time=inf, metrics=['mean_square_error', 'running_time'], n_wait=200, output_file='exec_AXGBRegR_abrupto2.out', pretrain_size=0, restart_stream=True, show_plot=False)
+# TEST CONFIGURATION END
+id,mean_mse_[AXGBRegR],current_mse_[AXGBRegR],training_time_[AXGBRegR],testing_time_[AXGBRegR],total_running_time_[AXGBRegR]
+199,15800.573508,15800.573508,0.023064,0.055989,0.079053
+399,13660.050428,11519.527348,0.027093,0.094466,0.121560
+599,12774.281965,11002.745038,0.031823,0.132022,0.163845
+799,11652.487429,8287.103822,0.033277,0.172582,0.205859
+999,11023.007642,8505.088493,0.034793,0.208327,0.243120
+1199,10320.564717,6808.350093,0.042684,0.244422,0.287106
+1399,9778.235343,6524.259099,0.044285,0.286228,0.330513
+1599,9547.115465,7929.276319,0.045911,0.326970,0.372881
+1799,9358.014126,7845.203409,0.047877,0.366305,0.414182
+1999,9146.864857,7246.521439,0.049775,0.402812,0.452587
+2199,8788.276262,5202.390316,0.058638,0.441108,0.499745
+2399,8512.867211,5483.367650,0.059922,0.476570,0.536493
+2599,8246.842787,5054.549701,0.061601,0.515475,0.577077
+2799,8122.678558,6508.543572,0.063350,0.558135,0.621485
+2999,8024.799771,6654.496759,0.065141,0.605041,0.670182
+3199,7805.629682,4518.078343,0.079079,0.688989,0.768068
+3399,7651.122892,5179.014247,0.080848,0.783784,0.864632
+3599,7572.437540,6234.786572,0.082944,0.847607,0.930551
+3799,7417.161318,4622.189308,0.084459,0.897877,0.982336
+3999,7293.982969,4953.594344,0.085972,0.936124,1.022096
+4199,7175.138798,4798.255380,0.096556,0.968808,1.065365
+4399,7041.286359,4230.385139,0.097987,1.001490,1.099477
+4599,6939.151929,4692.194473,0.099731,1.039222,1.138954
+4799,6798.563306,3565.024977,0.101492,1.076491,1.177983
+4999,6699.296321,4316.888665,0.103087,1.107805,1.210892
+5199,6596.164115,4017.858971,0.113026,1.137925,1.250951
+5399,6493.821962,3832.925987,0.114514,1.176163,1.290677

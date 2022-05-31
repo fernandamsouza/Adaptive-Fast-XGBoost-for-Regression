@@ -79,9 +79,8 @@ class AdaptiveSemiRegressorJr(BaseSKMObject, RegressorMixin):
             if self.unic == "S":
                 self._drift_detector.append(ADWIN())
             else:
-                self._drift_detector.append(ADWIN(delta=0.00001))
-                self._drift_detector.append(EDDM())
-                self._drift_detector.append(KSWIN(alpha=0.00001))
+                self._drift_detector.append(ADWIN(delta=0.0000001))
+                self._drift_detector.append(KSWIN(alpha=0.0000001))
 
 
     def reset(self):
