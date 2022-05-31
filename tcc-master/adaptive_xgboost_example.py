@@ -181,7 +181,7 @@ AXGBRegS = AdaptiveSemiRegressorJS(learning_rate=learning_rate,
 # abalone = FileStream("datasets/abalone.csv")
 # ailerons = FileStream("datasets/ailerons.csv")
 # bike = FileStream("datasets/bikes_clean.csv")
-fried_delve = FileStream("fried_delve.csv")
+# fried_delve = FileStream("fried_delve.csv")
 # elevators = FileStream("datasets/elevators.csv")
 # house8l = FileStream("datasets/house8L.csv")
 # house16h = FileStream("datasets/house16H.csv")
@@ -227,8 +227,8 @@ elif argumentos.DATASET == "gradual":
     stream = regression_generator_drift_g4
 elif argumentos.DATASET == "incremental":
     stream = hyperplane
-elif argumentos.DATASET == "real":
-    stream = fried_delve
+# elif argumentos.DATASET == "real":
+#     stream = fried_delve
     
 # Criar modelo
 model = None

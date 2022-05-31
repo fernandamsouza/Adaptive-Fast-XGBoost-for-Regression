@@ -5,7 +5,7 @@ ARQUIVO_TESTES="adaptive_xgboost_example.py"
 ARQUIVO_GRIDSEARCH="grid_cv.py"
 MAX_REGISTROS=500000
 QNT_X=5
-DATASETS=("abrupto" "gradual" "incremental" "real")
+DATASETS=("abrupto" "gradual" "incremental")
 CLASSIFICADORES=("AXGBRegRD" "AXGBRegR" "AXGBRegSD" "AXGBRegS" "HTR" "KNN" "HTRA" "ARFReg")
 DIR_RESULTADOS_GS="resultados_script_final"
 
