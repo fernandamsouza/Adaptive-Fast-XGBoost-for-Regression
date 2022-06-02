@@ -256,14 +256,14 @@ evaluator = EvaluatePrequential(pretrain_size=0,
                                 show_plot=False,
                                 metrics=["mean_square_error", "running_time"])
 
-evaluator.evaluate(
-    stream=stream,
-    model=model,
-    model_names=[argumentos.CLASSIFICADOR],
-)
-# evaluator.evaluate(stream=stream,
-#                    model=[AXGBRegRD, AXGBRegR, AXGBRegSD, AXGBRegS, HTR],
-#                    model_names=["D+RESET", "RESET", "D", "D_SEM_RESET", "HTR"])
+# evaluator.evaluate(
+#     stream=stream,
+#     model=model,
+#     model_names=[argumentos.CLASSIFICADOR],
+# )
+evaluator.evaluate(stream=stream,
+                   model=[AXGBRegRD, AXGBRegR, AXGBRegSD, AXGBRegS, HTR, KNN, HTRA, ARFReg],
+                   model_names=["D+RESET", "RESET", "D", "D_SEM_RESET", "HTR", "KNN", "HTRA", ARFReg])
 
 
 # evaluator.evaluate(stream=stream,

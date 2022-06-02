@@ -7,11 +7,12 @@ MAX_REGISTROS=500000
 QNT_X=5
 DATASETS=("abrupto" "gradual" "incremental")
 CLASSIFICADORES=("AXGBRegRD" "AXGBRegR" "AXGBRegSD" "AXGBRegS" "HTR" "KNN" "HTRA" "ARFReg")
+CLASSIFICADORES_ALL = ("ALL")
 DIR_RESULTADOS_GS="resultados_script_final"
 
 mkdir -p logs
 
-for classificador in ${CLASSIFICADORES[@]}
+for classificador in ${CLASSIFICADORES_ALL[@]}
 do
     for dataset in ${DATASETS[@]}
     do
