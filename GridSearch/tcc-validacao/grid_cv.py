@@ -53,8 +53,13 @@ parameter_grid = {
 }
 
 parameter_grid_drifts = {
-    "adwin_delta": [1, 0.00001, 0.0001],
-    "kswin_alpha": [1, 0.00001, 0.0001],
+    "adwin_delta": [1, 0.002, 0.003, 0.00001, 0.0001],
+    "kswin_alpha": [1, 0.005, 0.003, 0.00001, 0.0001],
+    "kswin_window_size": [100, 500],
+    "kswin_stat_size": [30, 100],
+    "ddm_min_num_instances": [30, 50],
+    "ddm_warning_level": [1, 2],
+    "ddm_out_control_level": [3, 5]
 }
 
 print(f"Carregando dataset {argumentos.DATASET}")

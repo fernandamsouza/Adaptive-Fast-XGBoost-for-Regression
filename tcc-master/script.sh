@@ -1,7 +1,7 @@
 #!/bin/bash
 
 COMANDO_PYTHON="python3.9"
-ARQUIVO_TESTES="adaptive_xgboost_example.py"
+ARQUIVO_TESTES="adaptive_xgboost_execution.py"
 ARQUIVO_GRIDSEARCH="grid_cv.py"
 MAX_REGISTROS=500000
 QNT_X=5
