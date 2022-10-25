@@ -12,5 +12,5 @@ This implementation is written in Python 3 and built on top of
 To run the example:
 
 ```shell
-python adaptive_xgboost_example.py
+python adaptive_xgboost_execution.py
 ```
